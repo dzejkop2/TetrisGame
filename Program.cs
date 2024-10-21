@@ -9,7 +9,22 @@ namespace Tetris
         static int height = 20;
         static int score = 0;
         static char[,] field = new char[height, width];
+        static int consoleX = Console.WindowWidth / 2 - width / 2 - 1;
+        static int consoleY = Console.WindowHeight / 2 - height / 2 - 1;
+        static int speed = 200;
         static bool isGameOver = false;
+        static bool mainMenu = true;
+        static bool difficultyMenu = false;
+        static bool pauseMenu = false; // TODO
+        static bool mainGame = false;
+        static string[] mainMenuOptions = { "START", "DIFFICULTY", "EXIT" };
+        static string[] difficultyOptions = { "EASY", "MEDIUM", "IMPOSSIBLE", "EXIT" };
+        static string[] pauseMenuOptions = { "RESUME", "EXIT" };
+        
+
+        /*
+         * PODLA CASU SCORE BOARD ALE NEVIEM CI TO STIHNEM DO PIATKU MUSI PRIST NEJAKY SPEED DEVELOPMENT XDDXXDXDXDXDDDDDDD (uz mi sibe z toho)
+         */
 
         static void InitializeField()
         {
@@ -29,46 +44,203 @@ namespace Tetris
             Piece currentPiece = Piece.GetRandom();
             int currentX = width / 2 - 1;
             int currentY = 0;
+            int selectedDifficulty = 0; // TODO
+            int selected = 0;
+            bool finished = false;
 
-            while (!isGameOver)
+            while (true)
             {
-                while (Console.KeyAvailable)
-                { 
-                    var key = Console.ReadKey(true).Key;
-                    if (key == ConsoleKey.LeftArrow) MovePiece(currentPiece, ref currentX, ref currentY, -1, 0);
-                    if (key == ConsoleKey.RightArrow) MovePiece(currentPiece, ref currentX, ref currentY, 1, 0);
-                    if (key == ConsoleKey.DownArrow) MovePiece(currentPiece, ref currentX, ref currentY, 0, 1);
-                    if (key == ConsoleKey.UpArrow) Rotate(currentPiece, ref currentX, ref currentY);
-                }
-
-                if (!MovePiece(currentPiece, ref currentX, ref currentY, 0, 1))
+                if (mainMenu)
                 {
-                    PlacePiece(currentPiece, currentX, currentY);
-                    CheckLines();
-                    currentPiece = Piece.GetRandom();
-                    currentX = width / 2 - 1;
-                    currentY = 0;
-
-                    if (!IsValidMove(currentPiece, currentX, currentY))
+                    if(!finished)
                     {
-                        isGameOver = true;
+                        DrawMenu(mainMenuOptions, selected);
+                        finished = true;
+                    }
+                    while (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(true).Key;
+                        if (key == ConsoleKey.UpArrow)
+                        {
+                            selected--;
+                            if (selected < 0)
+                            {
+                                selected = mainMenuOptions.Length - 1;
+                            }
+                            DrawMenu(mainMenuOptions, selected);
+                        }
+                        if (key == ConsoleKey.DownArrow)
+                        {
+                            selected++;
+                            if (selected > mainMenuOptions.Length - 1)
+                            {
+                                selected = 0;
+                            }
+                            DrawMenu(mainMenuOptions, selected);
+                        }
+                        if (key == ConsoleKey.Enter)
+                        {
+                            if (selected == 0)
+                            {
+                                mainMenu = false;
+                                ReturnToDefault(ref selected, ref finished);
+                                mainGame = true;
+                            }
+                            else if (selected == 1)
+                            {
+                                mainMenu = false;
+                                ReturnToDefault(ref selected, ref finished);
+                                difficultyMenu = true;
+                            }
+                            else if (selected == 2)
+                            {
+                                Console.Clear();
+                                return;
+                            }
+                        }
                     }
                 }
 
-                Draw(currentPiece, currentX, currentY);
-                Thread.Sleep(200);
-            }
+                if (difficultyMenu)
+                {
+                    if(!finished)
+                    {
+                        DrawMenu(difficultyOptions, selected);
+                        finished = true;
+                    }
+                    while (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(true).Key;
+                        if (key == ConsoleKey.UpArrow)
+                        {
+                            selected--;
+                            if (selected < 0)
+                            {
+                                selected = difficultyOptions.Length - 1;
+                            }
+                            DrawMenu(difficultyOptions, selected);
+                        }
+                        if (key == ConsoleKey.DownArrow)
+                        {
+                            selected++;
+                            if (selected > difficultyOptions.Length - 1)
+                            {
+                                selected = 0;
+                            }
+                            DrawMenu(difficultyOptions, selected);
+                        }
+                        if (key == ConsoleKey.Enter)
+                        {
+                            if (selected == 0)
+                            {
+                                speed = 200;
+                            }
+                            else if (selected == 1)
+                            {
+                                speed = 125;
+                            }
+                            else if (selected == 2)
+                            {
+                                speed = 50;
+                            }
+                            else if (selected == 3)
+                            {
+                                difficultyMenu = false;
+                                ReturnToDefault(ref selected, ref finished);
+                                Console.Clear();
+                                mainMenu = true;
+                            }
+                        }
+                    }
+                }
 
-            Console.Clear();
-            Console.SetCursorPosition(width / 2 - 4, height / 2);
-            Console.WriteLine("GAME OVER!");
-            Console.SetCursorPosition(width / 2 - 4, height / 2 + 1);
-            Console.WriteLine($"Score: {score}");
+                if (pauseMenu)
+                {
+                    Console.Clear();
+                    while (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(true).Key;
+                        if (key == ConsoleKey.Enter)
+                        {
+                            pauseMenu = false;
+                            ReturnToDefault(ref selected, ref finished);
+                            mainGame = true;
+                        }
+                    }
+                }
+
+                if (mainGame)
+                {
+                    while (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(true).Key;
+                        if (key == ConsoleKey.LeftArrow) MovePiece(currentPiece, ref currentX, ref currentY, -1, 0);
+                        if (key == ConsoleKey.RightArrow) MovePiece(currentPiece, ref currentX, ref currentY, 1, 0);
+                        if (key == ConsoleKey.DownArrow) MovePiece(currentPiece, ref currentX, ref currentY, 0, 1);
+                        if (key == ConsoleKey.UpArrow) Rotate(currentPiece, ref currentX, ref currentY);
+                        if (key == ConsoleKey.P)
+                        {
+                            mainGame = false;
+                            pauseMenu = true;
+                        }
+                    }
+
+                    if (!MovePiece(currentPiece, ref currentX, ref currentY, 0, 1))
+                    {
+                        PlacePiece(currentPiece, currentX, currentY);
+                        CheckLines();
+                        currentPiece = Piece.GetRandom();
+                        currentX = width / 2 - 1;
+                        currentY = 0;
+
+                        if (!IsValidMove(currentPiece, currentX, currentY))
+                        {
+                            mainGame = false;
+                            isGameOver = true;
+                        }
+                    }
+
+                    Draw(currentPiece, currentX, currentY);
+                    Thread.Sleep(speed);
+                }
+
+                if (isGameOver)
+                {
+                    if(!finished)
+                    {
+                        Console.Clear();
+                        Console.SetCursorPosition(Console.WindowWidth / 2 - 4, Console.WindowHeight / 2);
+                        Console.WriteLine("GAME OVER!");
+                        Console.SetCursorPosition(Console.WindowWidth / 2 - 4, Console.WindowHeight / 2 + 1);
+                        Console.WriteLine($"Score: {score}");
+                        finished = true;
+                    }
+                    while (Console.KeyAvailable)
+                    {
+                        var key = Console.ReadKey(true).Key;
+                        if (key == ConsoleKey.Enter)
+                        {
+                            isGameOver = false;
+                            Console.Clear();
+                            ReturnToDefault(ref selected, ref finished);
+                            mainMenu = true;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        static void ReturnToDefault (ref int selected, ref bool finished)
+        {
+            selected = 0;
+            finished = false;
         }
 
         static void Draw(Piece currentPiece, int posX, int posY)
         {
-            Console.SetCursorPosition(0, 0);
+            Console.SetCursorPosition(consoleX, consoleY);
+            Console.Write("+" + new string('-', width) + "+");
 
             char[,] tempField = (char[,])field.Clone();
             for (int y = 0; y < currentPiece.Size; y++)
@@ -86,18 +258,20 @@ namespace Tetris
                     }
                 }
             }
-
             for (int y = 0; y < height; y++)
             {
+                Console.SetCursorPosition(consoleX, consoleY + y + 1);
+                Console.Write("|");
                 for (int x = 0; x < width; x++)
                 {
                     Console.Write(tempField[y, x]);
                 }
-                Console.WriteLine();
+                Console.Write("|");
             }
-
-            Console.SetCursorPosition(0, height);
-            Console.WriteLine($"Score: {score}");
+            Console.SetCursorPosition(consoleX, consoleY + height + 1);
+            Console.Write("+" + new string('-', width) + "+");
+            Console.SetCursorPosition(consoleX, consoleY + height + 3);
+            Console.Write($"Score: {score}");
         }
 
         static bool IsValidMove(Piece piece, int posX, int posY)
@@ -190,13 +364,37 @@ namespace Tetris
                 }
             }
         }
-    }
 
+        static void DrawMenu(string[] options, int selected)
+        {
+            for (int i = 0; i < options.Length; i++)
+            {
+                Console.SetCursorPosition(consoleX, consoleY + height / 2 - options.Length + i);
+                Console.Write(new string(' ', Console.WindowWidth));
+                Console.SetCursorPosition(consoleX, consoleY + height / 2 - options.Length + i);
+                if (i == selected)
+                {
+                    Console.Write("-> " + options[i]);
+                }
+                else
+                {
+                    Console.Write(options[i]);
+                }
+
+            }
+        }
+    }
+    /*
+     * klasa pre padajuce blocky,
+     * nikdy som nevedel ze sa volaju 'tetromino' loliky lol
+     */
     class Piece
     {
+        // aky tvar ma kusok
         public char[,] Shape { get; private set; }
+        // velkost block pre vykreslovanie
         public int Size { get; private set; }
-
+        // originalny tvar kusku pre pripad nudze 
         private char[,] originalShape;
 
         public Piece(char[,] shape)
@@ -206,6 +404,7 @@ namespace Tetris
             this.Size = shape.GetLength(0);
         }
 
+        // rotovanie kusku
         public void Rotate()
         {
             char[,] newShape = new char[Size, Size];
@@ -224,49 +423,45 @@ namespace Tetris
             Shape = (char[,])originalShape.Clone();
         }
 
+        // vypisane kusky z ktorych sa da vyberat + randomne vyberanie
         public static Piece GetRandom()
         {
-            Random rand = new Random();
-            switch (rand.Next(0, 6))
+            Random random = new Random();
+            switch (random.Next(0, 5))
             {
                 case 0:
-                    return new Piece(new char[,] {
-                    { 'X', 'X', ' ' },
-                    { 'X', 'X', ' ' },
-                    { ' ', ' ', ' ' }
-                });
-                case 1:
                     return new Piece(new char[,] {
                     { ' ', 'X', ' ' },
                     { 'X', 'X', 'X' },
                     { ' ', ' ', ' ' }
                 });
-                case 2:
+                case 1:
                     return new Piece(new char[,] {
                     { 'X', 'X' },
                     { 'X', 'X' }
                 });
-                case 3:
+                case 2:
                     return new Piece(new char[,] {
                     { 'X', ' ', ' ' },
                     { 'X', 'X', 'X' },
                     { ' ', ' ', ' ' }
                 });
-                case 4:
+                case 3:
                     return new Piece(new char[,] {
                     { ' ', ' ', 'X' },
                     { 'X', 'X', 'X' },
                     { ' ', ' ', ' ' }
                 });
-                case 5:
+                case 4:
                     return new Piece(new char[,] {
                     { 'X', 'X', 'X', 'X' },
                     { ' ', ' ', ' ', ' ' },
                     { ' ', ' ', ' ', ' ' },
                     { ' ', ' ', ' ', ' ' }
                 });
-                default:return null;
+                default: return null;
             }
         }
     }
 }
+
