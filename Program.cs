@@ -15,17 +15,13 @@ namespace Tetris
         static bool isGameOver = false;
         static bool mainMenu = true;
         static bool difficultyMenu = false;
-        static bool pauseMenu = false; // TODO
+        static bool pauseMenu = false;
         static bool mainGame = false;
         static string[] mainMenuOptions = { "START", "DIFFICULTY", "EXIT" };
         static string[] difficultyOptions = { "EASY", "MEDIUM", "IMPOSSIBLE", "EXIT" };
         static string[] pauseMenuOptions = { "RESUME", "EXIT" };
-        
 
-        /*
-         * PODLA CASU SCORE BOARD ALE NEVIEM CI TO STIHNEM DO PIATKU MUSI PRIST NEJAKY SPEED DEVELOPMENT XDDXXDXDXDXDDDDDDD (uz mi sibe z toho)
-         */
-
+        // Inicializacia hlavneho fieldu, pouzite aj pri prepisovani -> ked exitneme hru
         static void InitializeField()
         {
             for (int y = 0; y < height; y++)
@@ -39,60 +35,62 @@ namespace Tetris
 
         static void Main(string[] args)
         {
+            // nejake premenne
             Console.CursorVisible = false;
             InitializeField();
             Piece currentPiece = Piece.GetRandom();
             int currentX = width / 2 - 1;
             int currentY = 0;
-            int selectedDifficulty = 0; // TODO
-            int selected = 0;
             bool finished = false;
+            Menu mainMenu_menu = new Menu(mainMenuOptions, false);
+            Menu diffMenu = new Menu(difficultyOptions, true);
+            Menu pauseMenu_menu = new Menu(pauseMenuOptions, false);
 
+            /*
+             * Hlavny loop hry
+             * Cez if pozera ktora cast hry ma byt nacitana
+             * Hybanie pomocou while -> urobene kvoli tomu ako funguju inputy do konzole - ak by sa to robilo cez if, kazdy input by sa zapisal do nejakeho queue
+             * a postupne by sa vykonavali, takto sa beru inputy iba vtedy, ked realne drzime nejaku klavesu
+             */
             while (true)
             {
                 if (mainMenu)
                 {
-                    if(!finished)
+                    if(!mainMenu_menu.Finished)
                     {
-                        DrawMenu(mainMenuOptions, selected);
-                        finished = true;
+                        mainMenu_menu.DrawMenu(consoleX, consoleY, height);
+                        mainMenu_menu.Finished = true;
                     }
                     while (Console.KeyAvailable)
                     {
                         var key = Console.ReadKey(true).Key;
                         if (key == ConsoleKey.UpArrow)
                         {
-                            selected--;
-                            if (selected < 0)
-                            {
-                                selected = mainMenuOptions.Length - 1;
-                            }
-                            DrawMenu(mainMenuOptions, selected);
+                            mainMenu_menu.Selected--;
+                            mainMenu_menu.CheckSelect();
+                            mainMenu_menu.DrawMenu(consoleX, consoleY, height);
                         }
                         if (key == ConsoleKey.DownArrow)
                         {
-                            selected++;
-                            if (selected > mainMenuOptions.Length - 1)
-                            {
-                                selected = 0;
-                            }
-                            DrawMenu(mainMenuOptions, selected);
+                            mainMenu_menu.Selected++;
+                            mainMenu_menu.CheckSelect();
+                            mainMenu_menu.DrawMenu(consoleX, consoleY, height);
                         }
                         if (key == ConsoleKey.Enter)
                         {
-                            if (selected == 0)
+                            if (mainMenu_menu.Selected == 0)
                             {
                                 mainMenu = false;
-                                ReturnToDefault(ref selected, ref finished);
+                                mainMenu_menu.ReturnToDefault();
                                 mainGame = true;
                             }
-                            else if (selected == 1)
+                            else if (mainMenu_menu.Selected == 1)
                             {
                                 mainMenu = false;
-                                ReturnToDefault(ref selected, ref finished);
+                                mainMenu_menu.ReturnToDefault();
                                 difficultyMenu = true;
                             }
-                            else if (selected == 2)
+                            else if (mainMenu_menu.Selected == 2)
                             {
                                 Console.Clear();
                                 return;
@@ -100,71 +98,100 @@ namespace Tetris
                         }
                     }
                 }
-
                 if (difficultyMenu)
                 {
-                    if(!finished)
+                    if(!diffMenu.Finished)
                     {
-                        DrawMenu(difficultyOptions, selected);
-                        finished = true;
+                        diffMenu.DrawMenu(consoleX,consoleY,height);
+                        diffMenu.Finished = true;
                     }
                     while (Console.KeyAvailable)
                     {
                         var key = Console.ReadKey(true).Key;
                         if (key == ConsoleKey.UpArrow)
                         {
-                            selected--;
-                            if (selected < 0)
-                            {
-                                selected = difficultyOptions.Length - 1;
-                            }
-                            DrawMenu(difficultyOptions, selected);
+                            diffMenu.Selected--;
+                            diffMenu.CheckSelect();
+                            diffMenu.DrawMenu(consoleX, consoleY, height);
                         }
                         if (key == ConsoleKey.DownArrow)
                         {
-                            selected++;
-                            if (selected > difficultyOptions.Length - 1)
-                            {
-                                selected = 0;
-                            }
-                            DrawMenu(difficultyOptions, selected);
+                            diffMenu.Selected++;
+                            diffMenu.CheckSelect();
+                            diffMenu.DrawMenu(consoleX, consoleY, height);
                         }
                         if (key == ConsoleKey.Enter)
                         {
-                            if (selected == 0)
+                            if (diffMenu.Selected == 0)
                             {
                                 speed = 200;
+                                diffMenu.Diffucilty = 0;
+                                diffMenu.DrawMenu(consoleX, consoleY, height);
                             }
-                            else if (selected == 1)
+                            else if (diffMenu.Selected == 1)
                             {
                                 speed = 125;
+                                diffMenu.Diffucilty = 1;
+                                diffMenu.DrawMenu(consoleX, consoleY, height);
                             }
-                            else if (selected == 2)
+                            else if (diffMenu.Selected == 2)
                             {
                                 speed = 50;
+                                diffMenu.Diffucilty = 2;
+                                diffMenu.DrawMenu(consoleX, consoleY, height);
                             }
-                            else if (selected == 3)
+                            else if (diffMenu.Selected == 3)
                             {
                                 difficultyMenu = false;
-                                ReturnToDefault(ref selected, ref finished);
+                                diffMenu.ReturnToDefault();
                                 Console.Clear();
                                 mainMenu = true;
                             }
                         }
                     }
                 }
-
                 if (pauseMenu)
                 {
-                    Console.Clear();
+                    if (!pauseMenu_menu.Finished)
+                    {
+                        Console.Clear();
+                        pauseMenu_menu.DrawMenu(consoleX, consoleY, height);
+                        pauseMenu_menu.Finished = true;
+                    }
                     while (Console.KeyAvailable)
                     {
                         var key = Console.ReadKey(true).Key;
+                        if (key == ConsoleKey.UpArrow)
+                        {
+                            pauseMenu_menu.Selected--;
+                            pauseMenu_menu.CheckSelect();
+                            pauseMenu_menu.DrawMenu(consoleX, consoleY, height);
+                        }
+                        if (key == ConsoleKey.DownArrow)
+                        {
+                            pauseMenu_menu.Selected++;
+                            pauseMenu_menu.CheckSelect();
+                            pauseMenu_menu.DrawMenu(consoleX, consoleY, height);
+                        }
                         if (key == ConsoleKey.Enter)
                         {
-                            pauseMenu = false;
-                            ReturnToDefault(ref selected, ref finished);
-                            mainGame = true;
+                            if (pauseMenu_menu.Selected == 0)
+                            {
+                                pauseMenu = false;
+                                pauseMenu_menu.ReturnToDefault();
+                                mainGame = true;
+                            }
+                            else if (pauseMenu_menu.Selected == 1)
+                            {
+                                pauseMenu = false;
+                                pauseMenu_menu.ReturnToDefault();
+                                InitializeField();
+                                currentPiece = Piece.GetRandom();
+                                currentX = width / 2 - 1;
+                                currentY = 0;
+                                score = 0;
+                                mainMenu = true;
+                            }
                         }
                     }
                 }
@@ -222,7 +249,12 @@ namespace Tetris
                         {
                             isGameOver = false;
                             Console.Clear();
-                            ReturnToDefault(ref selected, ref finished);
+                            InitializeField();
+                            currentPiece = Piece.GetRandom();
+                            currentX = width / 2 - 1;
+                            currentY = 0;
+                            score = 0;
+                            finished = false;
                             mainMenu = true;
                         }
                     }
@@ -230,13 +262,11 @@ namespace Tetris
             }
         }
 
-
-        static void ReturnToDefault (ref int selected, ref bool finished)
-        {
-            selected = 0;
-            finished = false;
-        }
-
+        /*
+         * Vypisovanie herneho pola
+         * Robene cez prepisovanie, nie cez clearovanie -> hra je viac smooth, az tak vela neblika
+         * Dosiahnute pomocou hybania kurzoru
+         */
         static void Draw(Piece currentPiece, int posX, int posY)
         {
             Console.SetCursorPosition(consoleX, consoleY);
@@ -274,6 +304,10 @@ namespace Tetris
             Console.Write($"Score: {score}");
         }
 
+        /*
+         * Pozeranie mozneho movu
+         * Ak je move mimo fieldu hry alebo prechadza cez dalsi block pocita sa ako nevalidny
+         */
         static bool IsValidMove(Piece piece, int posX, int posY)
         {
             for (int y = 0; y < piece.Size; y++)
@@ -293,7 +327,10 @@ namespace Tetris
             }
             return true;
         }
-
+        /*
+         * Ukladanie kociek
+         * pretoze je robeny cez 2 polia musi sa kocka ulozit do hlavneho herneho pola
+         */
         static void PlacePiece(Piece piece, int posX, int posY)
         {
             for (int y = 0; y < piece.Size; y++)
@@ -308,6 +345,11 @@ namespace Tetris
             }
         }
 
+        /*
+         * Hybanie kociek
+         * Robene cez referencie aby sa posizie mohli nacitat a rovno zapisovat
+         * dx, dy - direction, je zadany priamo pri pozerani inputov pre jednoduhsiu implementaciu
+         */
         static bool MovePiece(Piece piece, ref int posX, ref int posY, int dx, int dy)
         {
             int newX = posX + dx;
@@ -323,6 +365,7 @@ namespace Tetris
             return false;
         }
 
+        // Rotovanie kociek, ak nie je validny (bol by mimo pole alebo uz by tam bola nejaka kocka), vrati sa do povodneho stavu
         static void Rotate(Piece piece, ref int posX, ref int posY)
         {
             piece.Rotate();
@@ -332,6 +375,11 @@ namespace Tetris
             }
         }
 
+        /*
+         * Pozeranie ci je plna line
+         * V podstate sa pozera cely field ci v lineach nie su diery (' ')
+         * Ak niesu pripocita sa 100 bodov, line sa clearne a cely field sa od line ktora bola clearnuta posunie o policko dole
+         */
         static void CheckLines()
         {
             for (int y = 0; y < height; y++)
@@ -365,24 +413,7 @@ namespace Tetris
             }
         }
 
-        static void DrawMenu(string[] options, int selected)
-        {
-            for (int i = 0; i < options.Length; i++)
-            {
-                Console.SetCursorPosition(consoleX, consoleY + height / 2 - options.Length + i);
-                Console.Write(new string(' ', Console.WindowWidth));
-                Console.SetCursorPosition(consoleX, consoleY + height / 2 - options.Length + i);
-                if (i == selected)
-                {
-                    Console.Write("-> " + options[i]);
-                }
-                else
-                {
-                    Console.Write(options[i]);
-                }
-
-            }
-        }
+        
     }
     /*
      * klasa pre padajuce blocky,
@@ -463,5 +494,77 @@ namespace Tetris
             }
         }
     }
-}
 
+    // classa pre vytvaranie menucok
+    class Menu
+    {
+        // options ktore sa zobrazia v menu
+        public string[] Options { get; private set; }
+        // ktory option je vybrany
+        public int Selected { get; set; }
+        // vybrana difficulty (pre DIFFICULTY menu)
+        public int Diffucilty { get; set; }
+        // pre lahsie a krajsie vypisovanie (aby sa stale neopakovalo)
+        public bool Finished { get; set; }
+        // pre zistenie ci je menu DIFFICULTY alebo vsetky ostatne
+        private bool Type { get; }
+
+        public Menu(string[] options, bool type)
+        {
+            this.Options = options;
+            this.Selected = 0;
+            this.Diffucilty = 0;
+            this.Finished = false;
+            this.Type = type;
+        }
+
+        // vypisovanie samotneho menucka
+        public void DrawMenu(int consoleX, int consoleY, int height)
+        {
+            for (int i = 0; i < Options.Length; i++)
+            {
+                Console.SetCursorPosition(consoleX, consoleY + height / 2 - Options.Length + i);
+                Console.Write(new string(' ', Console.WindowWidth));
+                Console.SetCursorPosition(consoleX, consoleY + height / 2 - Options.Length + i);
+                if (i == Selected)
+                {
+                    Console.Write("-> ");
+                }
+                if(this.Type == true && i < this.Options.Length - 1)
+                {
+                    if(this.Diffucilty == i)
+                    {
+                        Console.Write("|#| " + Options[i]);
+                    }
+                    else
+                    {
+                        Console.Write("| | " + Options[i]);
+                    }
+                }
+                else
+                {
+                    Console.Write(Options[i]);
+                }
+
+            }
+        }
+        // pozeranie ci nie je vybrany option mimo rozsahu
+        public void CheckSelect()
+        {
+            if (this.Selected < 0)
+            {
+                this.Selected = this.Options.Length; 
+            }
+            if (this.Selected > this.Options.Length - 1)
+            {
+                this.Selected = 0;
+            }
+        }
+        // vratenie menucka do povodneho stavu
+        public void ReturnToDefault()
+        {
+            this.Selected = 0;
+            this.Finished = false;
+        }
+    }
+}
