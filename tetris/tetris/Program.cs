@@ -5,6 +5,7 @@ namespace Tetris
 {
     class Program
     {
+        // globalne premenne vacsinou pre menu a zaklad hry
         static int width = 10;
         static int height = 20;
         static int score = 0;
@@ -35,7 +36,7 @@ namespace Tetris
 
         static void Main(string[] args)
         {
-            // nejake premenne
+            // premenne pre fungovanie hry
             Console.CursorVisible = false;
             InitializeField();
             Piece currentPiece = Piece.GetRandom();
@@ -458,7 +459,7 @@ namespace Tetris
         public static Piece GetRandom()
         {
             Random random = new Random();
-            switch (random.Next(0, 5))
+            switch (random.Next(0, 7))
             {
                 case 0:
                     return new Piece(new char[,] {
@@ -489,6 +490,18 @@ namespace Tetris
                     { ' ', ' ', ' ', ' ' },
                     { ' ', ' ', ' ', ' ' },
                     { ' ', ' ', ' ', ' ' }
+                });
+                case 5:
+                    return new Piece(new char[,] {
+                    { 'X', 'X', ' '},
+                    { ' ', 'X', 'X'},
+                    { ' ', ' ', ' '}
+                });
+                case 6:
+                    return new Piece(new char[,] {
+                    { ' ', 'X', 'X'},
+                    { 'X', 'X', ' '},
+                    { ' ', ' ', ' '}
                 });
                 default: return null;
             }
